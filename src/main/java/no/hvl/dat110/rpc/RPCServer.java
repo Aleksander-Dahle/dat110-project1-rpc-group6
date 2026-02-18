@@ -24,43 +24,53 @@ public class RPCServer {
 	}
 	
 	public void run() {
-		
+
 		// the stop RPC method is built into the server
 		RPCRemoteImpl rpcstop = new RPCServerStopImpl(RPCCommon.RPIDSTOP,this);
-		
+		register(RPCCommon.RPIDSTOP, rpcstop);
+
 		System.out.println("RPC SERVER RUN - Services: " + services.size());
-			
-		connection = msgserver.accept(); 
-		
+
+		connection = msgserver.accept();
+
 		System.out.println("RPC SERVER ACCEPTED");
-		
+
 		boolean stop = false;
-		
+
 		while (!stop) {
-	    
+
 		   byte rpcid = 0;
 		   Message requestmsg, replymsg;
-		   
-		   // TODO - START
-		   // - receive a Message containing an RPC request
-		   // - extract the identifier for the RPC method to be invoked from the RPC request
-		   // - extract the method's parameter by decapsulating using the RPCUtils
-		   // - lookup the method to be invoked
-		   // - invoke the method and pass the param
-		   // - encapsulate return value 
-		   // - send back the message containing the RPC reply
-			
-		   if (true)
-				throw new UnsupportedOperationException(TODO.method());
-		   
-		   // TODO - END
 
-			// stop the server if it was stop methods that was called
+		   // receive a Message containing an RPC request
+		   requestmsg = connection.receive();
+		   byte[] rpcmsg = requestmsg.getData();
+
+		   // extract the identifier for the RPC method to be invoked from the RPC request
+		   rpcid = rpcmsg[0];
+
+		   // extract the method's parameter by decapsulating using the RPCUtils
+		   byte[] param = RPCUtils.decapsulate(rpcmsg);
+
+		   // lookup the method to be invoked
+		   RPCRemoteImpl service = services.get(rpcid);
+
+		   // invoke the method and pass the param
+		   byte[] returnval = service.invoke(param);
+
+		   // encapsulate return value
+		   byte[] replyrpcmsg = RPCUtils.encapsulate(rpcid, returnval);
+		   replymsg = new Message(replyrpcmsg);
+
+		   // send back the message containing the RPC reply
+		   connection.send(replymsg);
+
+		   // stop the server if it was stop methods that was called
 		   if (rpcid == RPCCommon.RPIDSTOP) {
 			   stop = true;
 		   }
 		}
-	
+
 	}
 	
 	// used by server side method implementations to register themselves in the RPC server
