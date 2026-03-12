@@ -38,38 +38,37 @@ public class RPCServer {
 		boolean stop = false;
 
 		while (!stop) {
-
-		   byte rpcid = 0;
-		   Message requestmsg, replymsg;
-
-		   // receive a Message containing an RPC request
-		   requestmsg = connection.receive();
-		   byte[] rpcmsg = requestmsg.getData();
-
-		   // extract the identifier for the RPC method to be invoked from the RPC request
-		   rpcid = rpcmsg[0];
-
-		   // extract the method's parameter by decapsulating using the RPCUtils
-		   byte[] param = RPCUtils.decapsulate(rpcmsg);
-
-		   // lookup the method to be invoked
-		   RPCRemoteImpl service = services.get(rpcid);
-
-		   // invoke the method and pass the param
-		   byte[] returnval = service.invoke(param);
-
-		   // encapsulate return value
-		   byte[] replyrpcmsg = RPCUtils.encapsulate(rpcid, returnval);
-		   replymsg = new Message(replyrpcmsg);
-
-		   // send back the message containing the RPC reply
-		   connection.send(replymsg);
-
-		   // stop the server if it was stop methods that was called
-		   if (rpcid == RPCCommon.RPIDSTOP) {
-			   stop = true;
-		   }
-		}
+			   byte rpcid = 0;
+			   Message requestmsg, replymsg;
+			   
+			   requestmsg = connection.receive();
+			   
+			   byte[] rpcmsg = requestmsg.getData();
+			   
+			   rpcid = rpcmsg[0];
+			   
+			   byte[] param = RPCUtils.decapsulate(rpcmsg);
+			   
+			   RPCRemoteImpl service = services.get(rpcid);
+			   
+			   byte[] returnval;
+			   
+			   if (service == null) {
+			       System.out.println("Unknown RPC id: " + rpcid);
+			       returnval = new byte[0];
+			   } else {
+			       returnval = service.invoke(param);
+			   }
+			   
+			   byte[] replyrpcmsg = RPCUtils.encapsulate(rpcid, returnval);
+			   
+			   replymsg = new Message(replyrpcmsg);
+			   
+			   connection.send(replymsg);
+			   if (rpcid == RPCCommon.RPIDSTOP) {
+				   stop = true;
+			   }
+			}
 
 	}
 	

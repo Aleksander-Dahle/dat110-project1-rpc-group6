@@ -110,7 +110,7 @@ public class RPCUtils {
 		
 		int decoded = 0;
 		
-		decoded = ByteBuffer.wrap(data).getInt();
+		decoded = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 4)).getInt();
 
 		
 		return decoded;
